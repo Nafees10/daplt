@@ -83,9 +83,11 @@ extern (C){
 	/// Releases iterator
 	void freeDictIter(void*);
 
+	/// (map, ptr to iterator)
 	/// Advances dict iterator
 	void advanceDictIter(PltObject, void**);
 
+	/// (iterator, value)
 	/// Sets value at iterator
 	void setDictIterValue(void*, PltObject);
 
@@ -101,6 +103,7 @@ extern (C){
 	/// Pushes a ubyte at end of byteArray
 	void btPush(PltObject, ubyte);
 
+	/// (array, retPtr)
 	/// Pops a ubyte from end of a byteArray
 	/// Returns: false if byteArray was empty
 	bool btPop(PltObject, PltObject*);
@@ -114,31 +117,68 @@ extern (C){
 	/// byteArray as an array of ubytes...
 	ubyte* btAsArray(PltObject);
 
-	//Plutonium list
+	/// Returns: newly allocated Plutonium List
 	PltObject allocList();
+
+	/// (list, value)
+	/// Pushes to a Plutonium List
 	void listPush(PltObject, PltObject);
+
+	/// (list, retPtr)
+	/// Pops from a Plutonium List
+	/// Returns: if list was empty
 	bool listPop(PltObject, PltObject*);
+
+	/// Returns: size of a Plutonium List
 	size_t listSize(PltObject);
+
+	/// Resizes a Plutonium List
 	void listResize(PltObject, size_t);
+
+	/// Returns: a Plutonium List as an array of PltObjects
 	PltObject* listAsArray(PltObject);
 
-	//Module
+	/// Returns: newly allocated module
 	PltObject allocModule(const char*);
+
+	/// (module, memberName, member)
+	/// Adds a member to a module
 	void addModuleMember(PltObject, const char*, PltObject);
 
-	//Klass
+	/// Returns: newly allocated Class
 	PltObject allocKlass(const char*);
-	void klassAddMember(const char*, PltObject);
-	void klassAddPrivateMember(const char*, PltObject);
 
-	//Klass Objects
+	/// (Class, memberName, member)
+	/// Adds a member with a name to a Class
+	void klassAddMember(PltObject, const char*, PltObject);
+
+	/// (Class, memberName, member)
+	/// Adds a private member with a name to a Class
+	void klassAddPrivateMember(PltObject, const char*, PltObject);
+
+	/// Returns: an instance of a Class
 	PltObject allocObj(PltObject);
-	void objAddMember(const char*, PltObject);
-	void objAddPrivateMember(const char*, PltObject);
-	bool objGetMember(const char*, PltObject*);
-	bool objSetMember(const char*, PltObject);
 
-	//Native Function
+	/// (Class, memberName, member)
+	/// Adds a member to a class instance
+	void objAddMember(PltObject, const char*, PltObject);
+
+	/// (Class, memberName, member)
+	/// Adds a private member to a class instance
+	void objAddPrivateMember(PltObject, const char*, PltObject);
+
+	/// (Class, memberName, ret ptr)
+	/// Gets a member from a class instance
+	/// Returns: false if does not exist
+	bool objGetMember(PltObject, const char*, PltObject*);
+
+	/// (Class, memberName, val)
+	/// Sets a member in a class instance
+	/// Returns: false if does not exist
+	bool objSetMember(PltObject, const char*, PltObject);
+
+	/// (name, func ptr)
+	/// Returns: a PltObject against a native function
 	PltObject PObjFromNativeFun(const char*, NativeFunPtr);
 
 	//Native Method
