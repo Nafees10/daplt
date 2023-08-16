@@ -42,7 +42,7 @@ extern (C) struct FileObject{
 
 alias NativeFunPtr = extern (C) PltObject *function(PltObject*, int);
 
-extern (C){
+extern (C) extern __gshared{
 	PltObject nil;
 	PltObject Error;
 	PltObject TypeError;
@@ -181,27 +181,37 @@ extern (C){
 	/// Returns: a PltObject against a native function
 	PltObject PObjFromNativeFun(const char*, NativeFunPtr);
 
-	//Native Method
+	/// (name, function ptr, class)
+	/// Returns: a PltObject against a native function binded to a class
 	PltObject PObjFromNativeMethod(const char*, NativeFunPtr, PltObject);
 
-	//ErrObject
+	/// Returns: error object, with message
 	PltObject Plt_Err(PltObject, const char*);
 
-	//String
+	/// Returns: newly allocated string from a c string
 	PltObject allocStr(const char*);
-	size_t strLength(PltObject);
-	const(char)* strAsCstr(PltObject);
-	const(char)* strResize(PltObject);
-	//Conversions
-	PltObject PObjFromInt(int);
-	PltObject PObjFromInt64(long);
-	PltObject PObjFromDouble(double);
-	PltObject PObjFromByte(ubyte);
-	PltObject PObjFromBool(bool);
-	void foo();
-}
 
-unittest{
-	import std.stdio;
-	writeln("helo");
+	/// Returns: Length of a Plutonium string
+	size_t strLength(PltObject);
+
+	/// Returns: Plutonium string as a const c string
+	const(char)* strAsCstr(PltObject);
+
+	/// Resizes a plutonium string
+	void strResize(PltObject, size_t);
+
+	/// Returns: Plutonium object from int
+	PltObject PObjFromInt(int);
+
+	/// Returns: Plutonium object from long
+	PltObject PObjFromInt64(long);
+
+	/// Returns: Plutonium object from double
+	PltObject PObjFromDouble(double);
+
+	/// Returns: Plutonium object from ubyte
+	PltObject PObjFromByte(ubyte);
+
+	/// Returns: Plutonium object from bool
+	PltObject PObjFromBool(bool);
 }
