@@ -3,6 +3,12 @@ description "D wrapper to Plutonium C API"
 authors "nafees"
 copyright "Copyright © 2023, nafees"
 license "MIT"
-targetType "library"
 lflags "c_api.o"
 preGenerateCommands "sh $PACKAGE_DIR/buildc.sh"
+configuration "default"{
+	targetType "library"
+}
+configuration "test"{
+	versions "test"
+	targetType "dynamicLibrary"
+}
