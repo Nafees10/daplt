@@ -40,7 +40,7 @@ extern (C) struct FileObject{
 	bool open;
 }
 
-alias NativeFunPtr = extern (C) PltObject *function(PltObject*, int);
+alias NativeFunPtr = extern (C) PltObject function(PltObject*, int);
 
 extern (C) extern __gshared{
 	PltObject nil;
