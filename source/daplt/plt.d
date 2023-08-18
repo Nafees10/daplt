@@ -1,4 +1,6 @@
-module daplt.plutonium;
+module daplt.plt;
+
+import core.stdc.stdio;
 
 enum PltObjectType : char{
 	List = 'j',

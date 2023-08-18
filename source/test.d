@@ -1,6 +1,7 @@
 module test;
 
-import plutonium;
+import daplt,
+			 daplt.plt;
 import std.stdio,
 			 std.string;
 
@@ -11,6 +12,8 @@ version (test){
 		addModuleMember(mod, "println\0", PObjFromNativeFun(
 					"println\0", &println));
 
+		PObj o;
+		o.get!int;
 		return mod;
 	}
 
