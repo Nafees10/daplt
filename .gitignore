@@ -9,6 +9,8 @@ daplt.dll
 daplt.a
 daplt.lib
 daplt-test-*
+*.a
+*.so
 *.exe
 *.pdb
 *.o
