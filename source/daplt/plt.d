@@ -74,6 +74,9 @@ extern (C){
 	/// Returns: true if set
 	bool dictSet(PltObject, PltObject, PltObject);
 
+	/// (dictionary, key, value)
+	bool dictAdd(PltObject, PltObject, PltObject);
+
 	/// Returns: Size of dictionary
 	size_t dictSize(PltObject);
 
@@ -190,6 +193,9 @@ extern (C){
 
 	/// Returns: newly allocated string from a c string
 	PltObject allocStr(const char*);
+
+	/// Returns: newly allocated string from a D string's ptr and length
+	PltObject allocStrByLength(const char*, size_t);
 
 	/// Returns: Length of a Plutonium string
 	size_t strLength(PltObject);
