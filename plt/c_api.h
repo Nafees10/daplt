@@ -33,7 +33,7 @@ extern "C"
     #define PLT_ERROBJ 'e' //same as an object,just in thrown state
     #define PLT_BYTEARR 'c'
 
-   
+
     //C friendly structs
     typedef struct PltObject
     {
@@ -46,19 +46,19 @@ extern "C"
         };
         char type;
     }PltObject;
-    
+
     typedef struct FileObject
     {
       FILE* fp;
       bool open;
     }FileObject;
     typedef PltObject(*NativeFunPtr)(PltObject*,int);
-    
+
     extern PltObject nil;
     extern PltObject Error;
     extern PltObject TypeError;
     extern PltObject ValueError;
-    extern PltObject MathError; 
+    extern PltObject MathError;
     extern PltObject NameError;
     extern PltObject IndexError;
     extern PltObject ArgumentError;
@@ -66,7 +66,7 @@ extern "C"
     extern PltObject KeyError;
     extern PltObject OverflowError;
     extern PltObject FileOpenError;
-    extern PltObject FileSeekError; 
+    extern PltObject FileSeekError;
     extern PltObject ImportError;
     extern PltObject ThrowError;
     extern PltObject MaxRecursionError;
@@ -74,6 +74,7 @@ extern "C"
     //Dictionary
     PltObject allocDict();
     PltObject dictGet(PltObject,PltObject,bool*);
+		bool dictAdd(PltObject, PltObject, PltObject);
     bool dictSet(PltObject,PltObject,PltObject);
     size_t dictSize(PltObject);
     void* newDictIter(PltObject);
@@ -82,7 +83,7 @@ extern "C"
     void setDictIterValue(void*);
     PltObject getDictIterValue(void*);
     PltObject getDictIterKey(void*);
-    
+
     //Bytearray
     PltObject allocBytearray();
     void btPush(PltObject,uint8_t);
@@ -118,6 +119,7 @@ extern "C"
     PltObject Plt_Err(PltObject,const char*);
     //String
     PltObject allocStr(const char*);
+    PltObject allocStrByLength(const char*, size_t);
     size_t strLength(PltObject);
     const char* strAsCstr(PltObject);
     const char* strResize(PltObject);
