@@ -173,6 +173,21 @@ struct PBArray{
 		plt.PltObject dummy;
 		return plt.btPop(obj, &dummy);
 	}
+
+	/// size
+	@property size_t length(){
+		return plt.btSize(obj);
+	}
+	/// ditto
+	@property size_t length(size_t newLength){
+		plt.btResize(obj, newLength);
+		return plt.btSize(obj);
+	}
+
+	/// Returns: as an array of ubyte
+	@property ubyte[] array(){
+		return plt.btAsArray(obj)[0 .. length];
+	}
 }
 
 /// A plutonium list
