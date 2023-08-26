@@ -322,6 +322,7 @@ struct PClassObj{
 	}
 
 	/// gets a member by name
+	/// Throws: DapltException if member does not exist
 	/// Returns: member PObj
 	PObj get(string name){
 		PObj ret;

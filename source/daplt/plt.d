@@ -221,3 +221,9 @@ extern (C){
 	/// Returns: Plutonium object from bool
 	PltObject PObjFromBool(bool);
 }
+
+/// (object, argv, argc, return) -> bool status
+/// call a callable object
+/// Returns: true if done, false if not
+extern (C) extern bool function(PltObject*, PltObject*, int, PltObject*)
+	vm_callObject;
