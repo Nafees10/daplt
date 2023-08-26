@@ -522,33 +522,49 @@ PltObject* listAsArray(PltObject obj){
 	return &LIST->at(0);
 }
 //////////////////////////
-PltObject allocModule(const char* name){
+PltObject allocModule(const char* name, size_t length){
 
 	Module* m = vm_allocModule();
-	m->name = name;
+	m->name.resize(length);
+	for (size_t i = 0; i < length; i ++)
+		(m->name)[i] = name[i];
 	return PObjFromModule(m);
 }
-void addModuleMember(PltObject m,const char* name,PltObject val){
+void addModuleMember(PltObject m,const char* name, size_t length, PltObject val){
 
 	Module* mptr = (Module*)m.ptr;
-	mptr->members.emplace(name,val);
+	string str;
+	str.resize(length);
+	for (size_t i = 0; i < length; i ++)
+		str[i] = name[i];
+	mptr->members.emplace(str,val);
 }
 ///////////////////////////////////////
-PltObject allocKlass(const char* name){
+PltObject allocKlass(const char* name, size_t length){
 
 	Klass* k = vm_allocKlass();
-	k->name = name;
+	k->name.resize(length);
+	for (size_t i = 0; i < length; i ++)
+		(k->name)[i] = name[i];
 	return PObjFromKlass(k);
 }
-void klassAddMember(PltObject obj,const char* name,PltObject val){
+void klassAddMember(PltObject obj,const char* name, size_t length, PltObject val){
 
 	Klass* k = (Klass*)obj.ptr;
-	k->members.emplace(name,val);
+	string str;
+	str.resize(length);
+	for (size_t i = 0; i < length; i ++)
+		str[i] = name[i];
+	k->members.emplace(str,val);
 }
-void klassAddPrivateMember(PltObject obj,const char* name,PltObject val){
+void klassAddPrivateMember(PltObject obj,const char* name, size_t length, PltObject val){
 
 	Klass* k = (Klass*)obj.ptr;
-	k->privateMembers.emplace(name,val);
+	string str;
+	str.resize(length);
+	for (size_t i = 0; i < length; i ++)
+		str[i] = name[i];
+	k->privateMembers.emplace(str,val);
 }
 //////////////////
 PltObject allocObj(PltObject klass){
@@ -560,39 +576,57 @@ PltObject allocObj(PltObject klass){
 	ko->privateMembers = k->privateMembers;
 	return PObjFromKlassObj(ko);
 }
-void objAddMember(PltObject obj,const char* name,PltObject val){
+void objAddMember(PltObject obj,const char* name, size_t length, PltObject val){
 
 	KlassObject* ko = (KlassObject*)obj.ptr;
-	ko->members.emplace(name,val);
+	string str;
+	str.resize(length);
+	for (size_t i = 0; i < length; i ++)
+		str[i] = name[i];
+	ko->members.emplace(str,val);
 }
-void objAddPrivateMember(PltObject obj,const char* name,PltObject val){
+void objAddPrivateMember(PltObject obj,const char* name, size_t length, PltObject val){
 
 	KlassObject* ko = (KlassObject*)obj.ptr;
-	ko->privateMembers.emplace(name,val);
+	string str;
+	str.resize(length);
+	for (size_t i = 0; i < length; i ++)
+		str[i] = name[i];
+	ko->privateMembers.emplace(str,val);
 }
-bool objGetMember(PltObject obj,const char* name,PltObject* ret){
+bool objGetMember(PltObject obj,const char* name,size_t length, PltObject* ret){
 
 	KlassObject* ko = (KlassObject*)obj.ptr;
-	auto it = ko->members.find(name);
+	string str;
+	str.resize(length);
+	for (size_t i = 0; i < length; i ++)
+		str[i] = name[i];
+	auto it = ko->members.find(str);
 	if(it == ko->members.end())
 		return false;
 	*ret = (*it).second;
 	return true;
 }
-bool objSetMember(PltObject obj,const char* name,PltObject val){
+bool objSetMember(PltObject obj,const char* name, size_t length, PltObject val){
 
 	KlassObject* ko = (KlassObject*)obj.ptr;
-	auto it = ko->members.find(name);
+	string str;
+	str.resize(length);
+	for (size_t i = 0; i < length; i ++)
+		str[i] = name[i];
+	auto it = ko->members.find(str);
 	if(it == ko->members.end())
 		return false;
 	(*it).second = val;
 	return true;
 }
 ///////////////
-PltObject PObjFromNativeFun(const char* name,NativeFunPtr ptr){
+PltObject PObjFromNativeFun(const char* name, size_t length, NativeFunPtr ptr){
 
 	NativeFunction* nf = vm_allocNativeFunObj();
-	nf->name = name;
+	nf->name.resize(length);
+	for (size_t i = 0; i < length; i ++)
+		(nf->name)[i] = name[i];
 	nf->klass = NULL;
 	nf->addr = ptr;
 	PltObject ret;
@@ -600,11 +634,13 @@ PltObject PObjFromNativeFun(const char* name,NativeFunPtr ptr){
 	ret.ptr = (void*)nf;
 	return ret;
 }
-PltObject PObjFromNativeMethod(const char* name,NativeFunPtr ptr,PltObject klass){
+PltObject PObjFromNativeMethod(const char* name, size_t length, NativeFunPtr ptr,PltObject klass){
 
 	Klass* k = (Klass*)klass.ptr;
 	NativeFunction* nf = vm_allocNativeFunObj();
-	nf->name = name;
+	nf->name.resize(length);
+	for (size_t i = 0; i < length; i ++)
+		(nf->name)[i] = name[i];
 	nf->klass = k;
 	nf->addr = ptr;
 	PltObject ret;
@@ -613,14 +649,14 @@ PltObject PObjFromNativeMethod(const char* name,NativeFunPtr ptr,PltObject klass
 	return ret;
 }
 ///////////////
-PltObject Plt_Err(PltObject klass,const char* msg){
+PltObject Plt_Err(PltObject klass,const char* msg, size_t length){
 
 	Klass* k = (Klass*)klass.ptr;
 	KlassObject* ko = vm_allocKlassObject();
 	ko->klass = k;
 	ko->members = k->members;
 	ko->privateMembers = k->privateMembers;
-	ko->members["msg"] = PObjFromStr(msg);
+	ko->members["msg"] = allocStrByLength(msg, length);
 	PltObject ret;
 	ret.type = PLT_ERROBJ;
 	ret.ptr = (void*)ko;

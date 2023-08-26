@@ -99,24 +99,24 @@ extern "C"
     void listResize(PltObject,size_t);
     PltObject* listAsArray(PltObject);
     //Module
-    PltObject allocModule(const char*);
+    PltObject allocModule(const char*, size_t);
     void addModuleMember(PltObject,const char*,PltObject);
     //Klass
-    PltObject allocKlass(const char*);
-    void klassAddMember(const char*,PltObject);
-    void klassAddPrivateMember(const char*,PltObject);
+    PltObject allocKlass(const char*, size_t);
+    void klassAddMember(const char*, size_t,PltObject);
+    void klassAddPrivateMember(const char*, size_t,PltObject);
     //Klass Objects
     PltObject allocObj(PltObject);
-    void objAddMember(const char*,PltObject);
-    void objAddPrivateMember(const char*,PltObject);
-    bool objGetMember(const char*,PltObject*);
-    bool objSetMember(const char*,PltObject);
+    void objAddMember(const char*, size_t,size_t, PltObject);
+    void objAddPrivateMember(const char*, size_t,PltObject);
+    bool objGetMember(const char*, size_t,PltObject*);
+    bool objSetMember(const char*, size_t,PltObject);
     //Native Function
-    PltObject PObjFromNativeFun(const char*,NativeFunPtr);
+    PltObject PObjFromNativeFun(const char*, size_t,NativeFunPtr);
     //Native Method
-    PltObject PObjFromNativeMethod(const char*,NativeFunPtr,PltObject);
+    PltObject PObjFromNativeMethod(const char*, size_t,NativeFunPtr,PltObject);
     //ErrObject
-    PltObject Plt_Err(PltObject,const char*);
+    PltObject Plt_Err(PltObject,const char*, size_t);
     //String
     PltObject allocStr(const char*);
     PltObject allocStrByLength(const char*, size_t);
