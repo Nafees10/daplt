@@ -32,73 +32,81 @@ struct PError{
 /// Function callable by plutonium code
 alias PFunc = plt.NativeFunPtr;
 
-/// if a type is some plt.PltObject wrapping class
+alias PObj = plt.PltObject;
+
+/// if a type is some PObj wrapping class
 private template IsPltWrapper(T){
 	enum IsPltWrapper = __traits(hasMember, T, "obj") &&
-		is (typeof(__traits(getMember, T, "obj")) == plt.PltObject);
+		is (typeof(__traits(getMember, T, "obj")) == PObj);
 }
 
-/// A plutonium value (wrapper around the actual object)
-struct PObj{
-	plt.PltObject obj;
-
-	/// Read a value
-	auto get(T)(){
-		static if (is (T == int) || is (T == uint)){
-			return obj.i;
-		}else static if (is (T == long) || is (T == ulong)){
-			return obj.l;
-		}else static if (is (T == bool)){
-			return cast(bool)obj.i;
-		}else static if (is (T == string)){
-			// TODO read string
-		}else static if (is (T == double) || is (T == float) || is (T == real)){
-			return obj.f;
-		}else static if (is (T == void*)){ // sad :(
-			return obj.ptr;
-		}else static if (is (T == PFunc)){
-			return cast(PFunc)(obj.ptr);
-		}else static if (IsPltWrapper!T){
-			return T(obj);
-		}
+/// Read a value by type from a PObj
+/// Returns: the value
+auto as(T, bool Check = true)(PObj obj){
+	static if (is (T == int) || is (T == uint)){
+		assert (obj.type == PType.Int);
+		return obj.i;
+	}else static if (is (T == long) || is (T == ulong)){
+		assert (obj.type == PType.Int64);
+		return obj.l;
+	}else static if (is (T == bool)){
+		assert (obj.type == PType.Bool);
+		return cast(bool)obj.i;
+	}else static if (is (T == string)){
+		assert (obj.type == PType.Str);
+		// TODO read string
+	}else static if (is (T == double) || is (T == float) || is (T == real)){
+		assert (obj.type == PType.Float);
+		return obj.f;
+	}else static if (is (T == void*)){ // sad :(
+		// no check here
+		return obj.ptr;
+	}else static if (is (T == PFunc)){
+		assert (obj.type == PType.NativeFunc);
+		return cast(PFunc)(obj.ptr);
+	}else static if (IsPltWrapper!T){
+		return T(obj);
 	}
+}
 
-	/// Returns: PObj created from a type
-	static PObj from(T)(T val){
-		static if (is (T == PObj)){
-			return val;
-		}static if (is (T == plt.PltObject)){
-			return PObj(val);
-		}else static if (is (T == uint) || is (T == ulong)){
-			static assert(false, "Plutonium doesnt do unsigned 32 or 64 bit");
-		}else static if (is (T == int) ||
-				is (T == short) || is (T == ushort) ||
-				is (T == byte) || is (T == ubyte) ||
-				is (T == bool)){
-			plt.PltObject o;
-			o.i = val;
-			return PObj(obj);
-		}else static if (is (T == long)){
-			plt.PltObject o;
-			o.l = val;
-			return PObj(o);
-		}else static if (is (T == string)){
-			return PObj(plt.allocStrByLength(val.ptr, val.length));
-		}else static if (is (T == double) || is (T == float)){
-			plt.PltObject o;
-			o.f = val;
-			return PObj(o);
-		}else static if (is (T == void*)){ // sad :(
-			plt.PltObject o;
-			o.ptr = val;
-			return PObj(o);
-		}else static if (is (T == PFunc)){
-			plt.PltObject o;
-			o.ptr = cast(void*)val;
-			return PObj(o);
-		}else static if (IsPltWrapper!T){
-			return val.obj;
-		}
+/// Returns: PObj created from a type
+PObj pobjOf(T)(T val){
+	static if (is (T == PObj)){
+		return val;
+	}else static if (is (T == uint) || is (T == ulong)){
+		static assert(false, "Plutonium doesnt do unsigned 32 or 64 bit");
+	}else static if (is (T == int) ||
+			is (T == short) || is (T == ushort) ||
+			is (T == byte) || is (T == ubyte) ||
+			is (T == bool)){
+		PObj o;
+		o.i = val;
+		o.type = PType.Int;
+		return PObj(obj);
+	}else static if (is (T == long)){
+		PObj o;
+		o.l = val;
+		o.type = PType.Int64;
+		return PObj(o);
+	}else static if (is (T == string)){
+		return plt.allocStrByLength(val.ptr, val.length);
+	}else static if (is (T == double) || is (T == float)){
+		PObj o;
+		o.f = val;
+		o.type = PType.Float;
+		return PObj(o);
+	}else static if (is (T == void*)){ // sad :(
+		PObj o;
+		o.ptr = val;
+		o.type = PType.Ptr;
+		return PObj(o);
+	}else static if (is (T == PFunc)){
+		PObj o;
+		o.ptr = cast(void*)val;
+		o.type = PType.NativeFunc;
+		return PObj(o);
+	}else static if (IsPltWrapper!T){
+		return val.obj;
 	}
 }
 
@@ -112,7 +120,12 @@ class DapltException : Exception{
 /// A plutonium dictionary
 /// TODO implement iteration
 struct PDict{
-	plt.PltObject obj;
+	PObj obj;
+
+	this (PObj obj){
+		assert (obj.type == PType.Dict);
+		this.obj = obj;
+	}
 
 	/// creates a new dictionary in plutonium memory
 	/// Returns: new PDict
@@ -154,7 +167,12 @@ struct PDict{
 
 /// A plutonium byte array
 struct PBArray{
-	plt.PltObject obj;
+	PObj obj;
+
+	this (PObj obj){
+		assert (obj.type == PType.ByteArr);
+		this.obj = obj;
+	}
 
 	/// creates a new ByteArray in plutonium memory
 	/// Returns: new PBArray
@@ -167,10 +185,10 @@ struct PBArray{
 		plt.btPush(obj, val);
 	}
 
-	/// remove past byte
+	/// remove last byte
 	/// Returns: true if done, false if was empty
 	bool reduce(){
-		plt.PltObject dummy;
+		PObj dummy;
 		return plt.btPop(obj, &dummy);
 	}
 
@@ -192,20 +210,129 @@ struct PBArray{
 
 /// A plutonium list
 struct PList{
-	plt.PltObject obj;
+	PObj obj;
+
+	this (PObj obj){
+		assert (obj.type == PType.List);
+		this.obj = obj;
+	}
+
+	/// Creates new list in plutonium memory
+	/// Returns: newly allocated plutonium list
+	static PList alloc(){
+		return PList(plt.allocList);
+	}
+
+	/// Appends a value
+	void append(PObj val){
+		plt.listPush(obj, val);
+	}
+
+	/// Removes last element
+	/// Returns: true if done, false if list was empty
+	bool reduce(){
+		PObj dummy;
+		return plt.listPop(obj, &dummy);
+	}
+
+	/// list size
+	@property size_t length(){
+		return plt.listSize(obj);
+	}
+	/// ditto
+	@property size_t length(size_t newLength){
+		plt.listResize(obj, newLength);
+		return plt.listSize(obj);
+	}
+
+	/// Returns: copy of PList as an array of PObj
+	PObj[] array(){
+		return plt.listAsArray(obj)[0 .. length];
+	}
 }
 
 /// A plutonium module
 struct PModule{
-	plt.PltObject obj;
+	PObj obj;
+
+	this (PObj obj){
+		assert (obj.type == PType.Module);
+		this.obj = obj;
+	}
+
+	/// Create a module in plutonium memory
+	/// Returns: newly allocated module
+	static PModule alloc(string name){
+		return PModule(plt.allocModule(name.ptr, name.length));
+	}
+
+	/// Adds a member to this module
+	void add(string name, PObj member){
+		plt.addModuleMember(obj, name.ptr, name.length, member);
+	}
 }
 
 /// A plutonium Class
 struct PClass{
-	plt.PltObject obj;
+	PObj obj;
+
+	this (PObj obj){
+		assert (obj.type == PType.Class);
+		this.obj = obj;
+	}
+
+	/// Allocates a new class in plutonium memory. This is a class not an object
+	/// Returns: newly allocated class
+	static PClass allocate(string name){
+		return PClass(plt.allocKlass(name.ptr, name.length));
+	}
+
+	/// adds a member
+	void add(string name, PObj member, bool pub = true){
+		if (pub){
+			plt.klassAddMember(obj, name.ptr, name.length, member);
+			return;
+		}
+		plt.klassAddPrivateMember(obj, name.ptr, name.length, member);
+	}
 }
 
 /// A plutonium Class Instance
-struct PInst{
-	plt.PltObject obj;
+struct PClassObj{
+	PObj obj;
+
+	this (PObj obj){
+		assert (obj.type == PType.Obj);
+		this.obj = obj;
+	}
+
+	/// Allocates an instance of a class in plutonium memory
+	/// Returns: newly allocated object
+	static PClassObj alloc(PObj classObj){
+		return PClassObj(plt.allocObj(classObj));
+	}
+
+	/// adds a member by name
+	void add(string name, PObj member, bool pub = true){
+		if (pub){
+			plt.objAddMember(obj, name.ptr, name.length, member);
+			return;
+		}
+		plt.objAddPrivateMember(obj, name.ptr, name.length, member);
+	}
+
+	/// gets a member by name
+	/// Returns: member PObj
+	PObj get(string name){
+		PObj ret;
+		if (!plt.objGetMember(obj, name.ptr, name.length, &ret))
+			throw new DapltException("member " ~ name ~ " does not exist in object");
+		return ret;
+	}
+
+	/// sets member by name
+	/// Returns: true if done, false if does not exist
+	bool set(string name, PObj val){
+		return plt.objSetMember(obj, name.ptr, name.length, val);
+	}
 }

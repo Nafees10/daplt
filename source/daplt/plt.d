@@ -142,57 +142,57 @@ extern (C){
 	PltObject* listAsArray(PltObject);
 
 	/// Returns: newly allocated module
-	PltObject allocModule(const char*);
+	PltObject allocModule(const char*, size_t);
 
 	/// (module, memberName, member)
 	/// Adds a member to a module
-	void addModuleMember(PltObject, const char*, PltObject);
+	void addModuleMember(PltObject, const char*, size_t, PltObject);
 
 	/// Returns: newly allocated Class
-	PltObject allocKlass(const char*);
+	PltObject allocKlass(const char*, size_t);
 
 	/// (Class, memberName, member)
 	/// Adds a member with a name to a Class
-	void klassAddMember(PltObject, const char*, PltObject);
+	void klassAddMember(PltObject, const char*, size_t, PltObject);
 
 	/// (Class, memberName, member)
 	/// Adds a private member with a name to a Class
-	void klassAddPrivateMember(PltObject, const char*, PltObject);
+	void klassAddPrivateMember(PltObject, const char*, size_t, PltObject);
 
 	/// Returns: an instance of a Class
 	PltObject allocObj(PltObject);
 
 	/// (Class, memberName, member)
 	/// Adds a member to a class instance
-	void objAddMember(PltObject, const char*, PltObject);
+	void objAddMember(PltObject, const char*, size_t, PltObject);
 
 	/// (Class, memberName, member)
 	/// Adds a private member to a class instance
-	void objAddPrivateMember(PltObject, const char*, PltObject);
+	void objAddPrivateMember(PltObject, const char*, size_t, PltObject);
 
 	/// (Class, memberName, ret ptr)
 	/// Gets a member from a class instance
 	/// Returns: false if does not exist
-	bool objGetMember(PltObject, const char*, PltObject*);
+	bool objGetMember(PltObject, const char*, size_t, PltObject*);
 
 	/// (Class, memberName, val)
 	/// Sets a member in a class instance
 	/// Returns: false if does not exist
-	bool objSetMember(PltObject, const char*, PltObject);
+	bool objSetMember(PltObject, const char*, size_t, PltObject);
 
 	/// (name, func ptr)
 	/// Returns: a PltObject against a native function
-	PltObject PObjFromNativeFun(const char*, NativeFunPtr);
+	PltObject PObjFromNativeFun(const char*, size_t, NativeFunPtr);
 
 	/// (name, function ptr, class)
 	/// Returns: a PltObject against a native function binded to a class
-	PltObject PObjFromNativeMethod(const char*, NativeFunPtr, PltObject);
+	PltObject PObjFromNativeMethod(const char*, size_t, NativeFunPtr, PltObject);
 
 	/// Returns: error object, with message
-	PltObject Plt_Err(PltObject, const char*);
+	PltObject Plt_Err(PltObject, const char*, size_t);
 
 	/// Returns: newly allocated string from a c string
-	PltObject allocStr(const char*);
+	PltObject allocStr(const char*, size_t);
 
 	/// Returns: newly allocated string from a D string's ptr and length
 	PltObject allocStrByLength(const char*, size_t);
