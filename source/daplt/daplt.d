@@ -28,6 +28,13 @@ struct PError{
 	static alias Throw = plt.ThrowError;
 	static alias MaxRecursion = plt.MaxRecursionError;
 	static alias Access = plt.AccessError;
+
+	static PObj opCall(PObj obj, string message){
+		return plt.Plt_Err(obj, message.ptr, message.length);
+	}
+	static PObj opCall(string message){
+		return plt.Plt_Err(PError.Error, message.ptr, message.length);
+	}
 }
 
 /// Function callable by plutonium code
@@ -66,10 +73,7 @@ T to(T : double)(PObj obj){
 T to(T : void*)(PObj obj){
 	return obj.ptr;
 }
-T to(T, From : PObj)(PObj obj) if (IsPltWrapper!T){
-	return T(obj);
-}
-/*T to(T : PFunc)(PObj obj){
+T to(T : PFunc)(PObj obj){
 	assert (obj.type == PType.NativeFunc);
 	return cast(PFunc)(obj.ptr);
 }
@@ -93,7 +97,7 @@ T to(T : PClassObj)(PObj obj){
 }
 T to(T : PCallable)(PObj obj){
 	return T(obj);
-}*/
+}
 
 PObj to(To : PObj, T)(T val){
 	static if (is (T == PObj)){
@@ -107,24 +111,24 @@ PObj to(To : PObj, T)(T val){
 		PObj o;
 		o.i = val;
 		o.type = PType.Int;
-		return PObj(obj);
+		return o;
 	}else static if (is (T == long)){
 		PObj o;
 		o.l = val;
 		o.type = PType.Int64;
-		return PObj(o);
+		return o;
 	}else static if (is (T == string)){
 		return plt.allocStrByLength(val.ptr, val.length);
 	}else static if (is (T == double) || is (T == float)){
 		PObj o;
 		o.f = val;
 		o.type = PType.Float;
-		return PObj(o);
+		return o;
 	}else static if (is (T == void*)){ // sad :(
 		PObj o;
 		o.ptr = val;
 		o.type = PType.Ptr;
-		return PObj(o);
+		return o;
 	}else static if (IsPltWrapper!T){
 		return val.obj;
 	}else{
@@ -388,7 +392,7 @@ struct PCallable{
 	PObj opCall(Types...)(Types args){
 		PObj[args.length] argsArr;
 		static foreach (i, arg; args)
-			argsArr[i] = arg.pobjOf;
+			argsArr[i] = arg.to!PObj;
 		PObj ret;
 		if (plt.vm_callObject(&obj, argsArr.ptr, cast(uint)args.length, &ret))
 			return ret;

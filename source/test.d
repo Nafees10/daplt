@@ -1,6 +1,6 @@
 module test;
 
-import daplt;
+import daplt.daplt;
 import std.stdio,
 			 std.string;
 
@@ -9,6 +9,7 @@ version (test){
 		writeln("init called");
 		PModule mod = PModule.alloc("test");
 		mod.add("println", PCallable("println", &println).to!PObj);
+		mod.add("callbackTest", PCallable("callbackTest", &callbackTest).to!PObj);
 		return mod.obj;
 	}
 
@@ -17,5 +18,15 @@ version (test){
 			write(argv[i].to!string);
 		writeln();
 		return PNull;
+	}
+
+	extern (C) PObj callbackTest(PObj* argv, int argc){
+		try{
+			auto func = argv[0].to!PCallable;
+			return func(5);
+		} catch (DapltException e){
+			writeln(e.msg);
+		}
+		return 1.to!PObj;
 	}
 }
