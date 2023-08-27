@@ -370,6 +370,7 @@ struct PCallable{
 
 	this (PObj obj){
 		assert (obj.type == PType.NativeFunc || obj.type == PType.Func);
+		this.obj = obj;
 	}
 	this (string name, PFunc func){
 		obj = plt.PObjFromNativeFun(name.ptr, name.length, func);
