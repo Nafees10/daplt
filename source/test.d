@@ -1,26 +1,22 @@
 module test;
 
-import daplt,
-			 daplt.plt;
+import daplt;
 import std.stdio,
 			 std.string;
 
-version (test){
-	extern (C) PltObject init(){
+//version (test){
+	extern (C) PObj init(){
 		writeln("init called");
-		auto mod = allocModule("test");
-		addModuleMember(mod, "println\0", PObjFromNativeFun(
-					"println\0", &println));
-
-		PObj o;
-		o.get!int;
-		return mod;
+		PModule mod = PModule.alloc("test");
+		mod.add("println", PCallable("println", &println).to!PObj);
+		return mod.obj;
 	}
 
-	extern (C) PltObject println(PltObject* argv, int argc){
+	extern (C) PObj println(PObj* argv, int argc){
+		writeln("hello");
 		foreach (i; 0 .. argc)
-			write(fromStringz(strAsCstr(argv[i])));
+			write(argv[i].to!string);
 		writeln();
-		return nil;
+		return PNull;
 	}
-}
+//}

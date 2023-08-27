@@ -2,7 +2,8 @@ module daplt;
 
 import plt = daplt.plt;
 
-import std.algorithm;
+import std.algorithm,
+			 std.string;
 
 /// Object type
 alias PType = plt.PltObjectType;
@@ -42,35 +43,59 @@ private template IsPltWrapper(T){
 
 /// Read a value by type from a PObj
 /// Returns: the value
-auto as(T, bool Check = true)(PObj obj){
-	static if (is (T == int) || is (T == uint)){
-		assert (obj.type == PType.Int);
-		return obj.i;
-	}else static if (is (T == long) || is (T == ulong)){
-		assert (obj.type == PType.Int64);
-		return obj.l;
-	}else static if (is (T == bool)){
-		assert (obj.type == PType.Bool);
-		return cast(bool)obj.i;
-	}else static if (is (T == string)){
-		assert (obj.type == PType.Str);
-		// TODO read string
-	}else static if (is (T == double) || is (T == float) || is (T == real)){
-		assert (obj.type == PType.Float);
-		return obj.f;
-	}else static if (is (T == void*)){ // sad :(
-		// no check here
-		return obj.ptr;
-	}else static if (is (T == PFunc)){
-		assert (obj.type == PType.NativeFunc);
-		return cast(PFunc)(obj.ptr);
-	}else static if (IsPltWrapper!T){
-		return T(obj);
-	}
+T to(T : int)(PObj obj){
+	assert (obj.type == PType.Int);
+	return obj.i;
 }
+T to(T : long)(PObj obj){
+	assert (obj.type == PType.Int64);
+	return obj.l;
+}
+T to(T : bool)(PObj obj){
+	assert (obj.type == PType.Bool);
+	return cast(bool)obj.i;
+}
+T to(T : string)(PObj obj){
+	assert (obj.type == PType.Str);
+	return cast(string)fromStringz(cast(char*)obj.ptr);
+}
+T to(T : double)(PObj obj){
+	assert (obj.type == PType.Float);
+	return obj.f;
+}
+T to(T : void*)(PObj obj){
+	return obj.ptr;
+}
+T to(T, From : PObj)(PObj obj) if (IsPltWrapper!T){
+	return T(obj);
+}
+/*T to(T : PFunc)(PObj obj){
+	assert (obj.type == PType.NativeFunc);
+	return cast(PFunc)(obj.ptr);
+}
+T to(T : PDict)(PObj obj){
+	return T(obj);
+}
+T to(T : PBArray)(PObj obj){
+	return T(obj);
+}
+T to(T : PList)(PObj obj){
+	return T(obj);
+}
+T to(T : PModule)(PObj obj){
+	return T(obj);
+}
+T to(T : PClass)(PObj obj){
+	return T(obj);
+}
+T to(T : PClassObj)(PObj obj){
+	return T(obj);
+}
+T to(T : PCallable)(PObj obj){
+	return T(obj);
+}*/
 
-/// Returns: PObj created from a type
-PObj pobjOf(T)(T val){
+PObj to(To : PObj, T)(T val){
 	static if (is (T == PObj)){
 		return val;
 	}else static if (is (T == uint) || is (T == ulong)){
@@ -100,13 +125,10 @@ PObj pobjOf(T)(T val){
 		o.ptr = val;
 		o.type = PType.Ptr;
 		return PObj(o);
-	}else static if (is (T == PFunc)){
-		PObj o;
-		o.ptr = cast(void*)val;
-		o.type = PType.NativeFunc;
-		return PObj(o);
 	}else static if (IsPltWrapper!T){
 		return val.obj;
+	}else{
+		static assert (false, "Daplt does not support " ~ To.stringof);
 	}
 }
 
@@ -335,5 +357,41 @@ struct PClassObj{
 	/// Returns: true if done, false if does not exist
 	bool set(string name, PObj val){
 		return plt.objSetMember(obj, name.ptr, name.length, val);
+	}
+}
+
+/// a callable object
+struct PCallable{
+	PObj obj;
+
+	this (PObj obj){
+		assert (obj.type == PType.NativeFunc || obj.type == PType.Func);
+	}
+	this (string name, PFunc func){
+		obj = plt.PObjFromNativeFun(name.ptr, name.length, func);
+	}
+	this (string name, PFunc func, PClass classObj){
+		obj = plt.PObjFromNativeMethod(name.ptr, name.length, func, classObj.obj);
+	}
+
+	/// Calls this callable object.
+	/// Throws: DapltException if some error (not valid callable object)
+	/// Returns: `PNull` or return value
+	PObj call(PObj[] args){
+		PObj ret;
+		if (plt.vm_callObject(&obj, args.ptr, cast(int)args.length, &ret))
+			return ret;
+		throw new DapltException("vm_callObject returned false");
+	}
+
+	/// ditto
+	PObj opCall(Types...)(Types args){
+		PObj[args.length] argsArr;
+		static foreach (i, arg; args)
+			argsArr[i] = arg.pobjOf;
+		PObj ret;
+		if (plt.vm_callObject(&obj, argsArr.ptr, cast(uint)args.length, &ret))
+			return ret;
+		throw new DapltException("vm_callObject returned false");
 	}
 }

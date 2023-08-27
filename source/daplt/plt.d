@@ -225,5 +225,8 @@ extern (C){
 /// (object, argv, argc, return) -> bool status
 /// call a callable object
 /// Returns: true if done, false if not
-extern (C) extern bool function(PltObject*, PltObject*, int, PltObject*)
-	vm_callObject;
+extern (C) extern __gshared bool function(
+		PltObject*,
+		PltObject*,
+		int,
+		PltObject*) vm_callObject;
