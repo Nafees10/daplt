@@ -4,7 +4,7 @@ import daplt;
 import std.stdio,
 			 std.string;
 
-//version (test){
+version (test){
 	extern (C) PObj init(){
 		writeln("init called");
 		PModule mod = PModule.alloc("test");
@@ -13,10 +13,9 @@ import std.stdio,
 	}
 
 	extern (C) PObj println(PObj* argv, int argc){
-		writeln("hello");
 		foreach (i; 0 .. argc)
 			write(argv[i].to!string);
 		writeln();
 		return PNull;
 	}
-//}
+}

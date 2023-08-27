@@ -57,7 +57,7 @@ T to(T : bool)(PObj obj){
 }
 T to(T : string)(PObj obj){
 	assert (obj.type == PType.Str);
-	return cast(string)fromStringz(cast(char*)obj.ptr);
+	return cast(string)fromStringz(cast(char*)plt.strAsCstr(obj));
 }
 T to(T : double)(PObj obj){
 	assert (obj.type == PType.Float);
