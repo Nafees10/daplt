@@ -100,17 +100,17 @@ extern "C"
     PltObject* listAsArray(PltObject);
     //Module
     PltObject allocModule(const char*, size_t);
-    void addModuleMember(PltObject,const char*,PltObject);
+    void addModuleMember(PltObject,const char*,size_t,PltObject);
     //Klass
     PltObject allocKlass(const char*, size_t);
-    void klassAddMember(const char*, size_t,PltObject);
-    void klassAddPrivateMember(const char*, size_t,PltObject);
+    void klassAddMember(PltObject,const char*, size_t,PltObject);
+    void klassAddPrivateMember(PltObject,const char*, size_t,PltObject);
     //Klass Objects
     PltObject allocObj(PltObject);
-    void objAddMember(const char*, size_t,size_t, PltObject);
-    void objAddPrivateMember(const char*, size_t,PltObject);
-    bool objGetMember(const char*, size_t,PltObject*);
-    bool objSetMember(const char*, size_t,PltObject);
+    void objAddMember(PltObject,const char*, size_t,size_t, PltObject);
+    void objAddPrivateMember(PltObject, const char*, size_t,PltObject);
+    bool objGetMember(PltObject, const char*, size_t,PltObject*);
+    bool objSetMember(PltObject, const char*, size_t,PltObject);
     //Native Function
     PltObject PObjFromNativeFun(const char*, size_t,NativeFunPtr);
     //Native Method
