@@ -50,53 +50,33 @@ private template IsPltWrapper(T){
 
 /// Read a value by type from a PObj
 /// Returns: the value
-T to(T : int)(PObj obj){
-	assert (obj.type == PType.Int);
-	return obj.i;
-}
-T to(T : long)(PObj obj){
-	assert (obj.type == PType.Int64);
-	return obj.l;
-}
-T to(T : bool)(PObj obj){
-	assert (obj.type == PType.Bool);
-	return cast(bool)obj.i;
-}
-T to(T : string)(PObj obj){
-	assert (obj.type == PType.Str);
-	return cast(string)fromStringz(cast(char*)plt.strAsCstr(obj));
-}
-T to(T : double)(PObj obj){
-	assert (obj.type == PType.Float);
-	return obj.f;
-}
-T to(T : void*)(PObj obj){
-	return obj.ptr;
-}
-T to(T : PFunc)(PObj obj){
-	assert (obj.type == PType.NativeFunc);
-	return cast(PFunc)(obj.ptr);
-}
-T to(T : PDict)(PObj obj){
-	return T(obj);
-}
-T to(T : PBArray)(PObj obj){
-	return T(obj);
-}
-T to(T : PList)(PObj obj){
-	return T(obj);
-}
-T to(T : PModule)(PObj obj){
-	return T(obj);
-}
-T to(T : PClass)(PObj obj){
-	return T(obj);
-}
-T to(T : PClassObj)(PObj obj){
-	return T(obj);
-}
-T to(T : PCallable)(PObj obj){
-	return T(obj);
+T get (T)(PObj obj){
+	static if (is (T == int)){
+		assert (obj.type == PType.Int);
+		return cast(int)obj.i;
+	}
+	static if (is (T == long)){
+		assert (obj.type == PType.Int64);
+		return cast(long)obj.l;
+	}
+	static if (is (T == bool)){
+		assert (obj.type == PType.Bool);
+		return cast(bool)obj.i;
+	}
+	static if (is (T == string)){
+		assert (obj.type == PType.Str);
+		return cast(string)fromStringz(cast(char*)plt.strAsCstr(obj));
+	}
+	static if (is (T == double)){
+		assert (obj.type == PType.Float);
+		return cast(double)obj.f;
+	}
+	static if (is (T == void*)){
+		return obj.ptr;
+	}
+	static if (IsPltWrapper!T){
+		return T(obj);
+	}
 }
 
 PObj to(To : PObj, T)(T val){
@@ -400,3 +380,6 @@ struct PCallable{
 		throw new DapltException("vm_callObject returned false");
 	}
 }
+
+/// mark as exported function
+enum PExport;

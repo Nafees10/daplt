@@ -15,14 +15,14 @@ version (test){
 
 	extern (C) PObj println(PObj* argv, int argc){
 		foreach (i; 0 .. argc)
-			write(argv[i].to!string);
+			write(argv[i].get!string);
 		writeln();
 		return PNull;
 	}
 
 	extern (C) PObj callbackTest(PObj* argv, int argc){
 		try{
-			auto func = argv[0].to!PCallable;
+			auto func = argv[0].get!PCallable;
 			return func(5);
 		} catch (DapltException e){
 			writeln(e.msg);
