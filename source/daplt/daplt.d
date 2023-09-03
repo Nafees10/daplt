@@ -3,7 +3,13 @@ module daplt.daplt;
 import plt = daplt.plt;
 
 import std.algorithm,
-			 std.string;
+			 std.string,
+			 std.traits,
+			 std.range,
+			 std.meta,
+			 core.stdc.stdlib,
+			 std.stdio,
+			 std.conv;
 
 /// Object type
 alias PType = plt.PltObjectType;
@@ -50,7 +56,7 @@ private template IsPltWrapper(T){
 
 /// Read a value by type from a PObj
 /// Returns: the value
-T get (T)(PObj obj){
+T get(T)(PObj obj){
 	static if (is (T == int)){
 		assert (obj.type == PType.Int);
 		return cast(int)obj.i;
@@ -112,14 +118,21 @@ PObj to(To : PObj, T)(T val){
 	}else static if (IsPltWrapper!T){
 		return val.obj;
 	}else{
-		static assert (false, "Daplt does not support " ~ To.stringof);
+		static assert (false, "Daplt does not support " ~ T.stringof);
 	}
 }
 
 /// daplt exception
 class DapltException : Exception{
+public:
+	PObj errorObj;
+	this (PObj obj = PObj.init, string msg = null){
+		super(msg);
+		this.errorObj = obj;
+	}
 	this (string msg = null){
 		super(msg);
+		this.errorObj = PError.Throw;
 	}
 }
 
@@ -147,7 +160,8 @@ struct PDict{
 		bool status = true;
 		auto ret = PObj(dictGet(obj, keyObj.obj, &status));
 		if (!status)
-			throw new DapltException("key object not found in dictionary");
+			throw new DapltException(PError.Key,
+					"key object not found in dictionary");
 		return ret;
 	}
 
@@ -333,7 +347,8 @@ struct PClassObj{
 	PObj get(string name){
 		PObj ret;
 		if (!plt.objGetMember(obj, name.ptr, name.length, &ret))
-			throw new DapltException("member " ~ name ~ " does not exist in object");
+			throw new DapltException(PError.Type,
+					"member " ~ name ~ " does not exist in object");
 		return ret;
 	}
 
@@ -383,3 +398,85 @@ struct PCallable{
 
 /// mark as exported function
 enum PExport;
+
+/// If something is exported
+private enum IsExported(alias T) = hasUDA!(T, PExport);
+
+/// Number of non-optional parameters of a callable
+private template ParameterMinCount(alias T){
+	enum ParameterMinCount = paramMinCount;
+	size_t paramMinCount(){
+		size_t count = 0;
+		static foreach (ParamType; ParameterDefaults!T){
+			static if (is (ParamType == void))
+				count ++;
+		}
+		return count;
+	}
+}
+
+/// Exported members of a module
+private template Exported(alias T){
+	alias Exported = AliasSeq!();
+	static foreach (member; __traits(allMembers, T)){
+		static if (IsExported!(__traits(getMember, T, member)))
+			Exported = AliasSeq!(Exported, __traits(getMember, T, member));
+	}
+}
+
+/// Create a module object, consisting of exported functions, where T is a
+/// container (module, struct, interface etc)
+PModule moduleCreate(alias T)(string name){
+	PModule mod = PModule.alloc(name);
+	writeln("creating module");
+	static foreach (fName; __traits(allMembers, T)){
+		static if (hasUDA!(__traits(getMember, T, fName), PExport)){
+			alias fn = __traits(getMember, T, fName);
+			mod.add(fName, PCallable(fName,
+						(&asPltFunc!(__traits(getMember, T, fName)))).obj);
+		}
+	}
+	return mod;
+}
+
+/// Plutonium to D function call translator. Use as:
+/// `asPltFunc!someDFunc(plutoniumArgPtr, argCount)`
+///
+/// Will catch `Exception`, and `DapltException`, returning an appropriate PObj
+/// Will also catch Error and `exit(1)`
+///
+/// Returns: PObj containing return value, or PNull, or error object in case of
+/// Exception
+extern (C) PObj asPltFunc(alias F)(PObj* ptr, int length) if (isCallable!F){
+	if (length < ParameterMinCount!F && length > Parameters!F.length)
+		return PError(PError.Argument,
+				format!"Expected between %d and %d arguemtns, got %d"(
+					ParameterMinCount!F, Parameters!F.length, length));
+	Parameters!F params;
+	params[ParameterMinCount!F .. $] = ParameterDefaults!F[$ - ParameterMinCount!F .. $];
+	try{
+		static foreach (i; 0 .. params.length){
+			try{
+				if (i < length)
+					params[i] = ptr[i].get!(Parameters!F[i]);
+			} catch (Exception e){
+				return PError(PError.Argument, "Invalid argument type, expected `" ~
+						Parameters!F[i].stringof ~ "`, got `" ~
+						std.conv.to!string(cast(PType)ptr[i].type) ~ "`");
+			}
+		}
+	} catch (Error e){
+		debug stderr.writeln("Unrecoverable Error occurred: ", e.msg);
+		stderr.flush();
+		exit (1);
+	}
+	PObj ret = PNull;
+	try{
+		ret = F(params).to!PObj;
+	} catch (DapltException e){
+		ret = PError(e.errorObj, e.msg);
+	} catch (Exception e){
+		ret = PError(PError.Throw, e.msg);
+	}
+	return ret;
+}

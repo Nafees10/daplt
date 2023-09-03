@@ -6,27 +6,10 @@ import std.stdio,
 
 version (test){
 	extern (C) PObj init(){
-		writeln("init called");
-		PModule mod = PModule.alloc("test");
-		mod.add("println", PCallable("println", &println).to!PObj);
-		mod.add("callbackTest", PCallable("callbackTest", &callbackTest).to!PObj);
-		return mod.obj;
+		return moduleCreate!(mixin(__MODULE__))("daplt").obj;
 	}
 
-	extern (C) PObj println(PObj* argv, int argc){
-		foreach (i; 0 .. argc)
-			write(argv[i].get!string);
-		writeln();
-		return PNull;
-	}
-
-	extern (C) PObj callbackTest(PObj* argv, int argc){
-		try{
-			auto func = argv[0].get!PCallable;
-			return func(5);
-		} catch (DapltException e){
-			writeln(e.msg);
-		}
-		return 1.to!PObj;
+	@PExport int length(string a, string b = null){
+		return cast(int)(a.length + b.length);
 	}
 }
