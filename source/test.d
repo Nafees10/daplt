@@ -4,6 +4,7 @@ import daplt.daplt;
 
 import std.stdio,
 			 std.string,
+			 std.format,
 			 core.runtime,
 			 core.memory;
 
@@ -23,5 +24,9 @@ version (test){
 		if (b)
 			write(b);
 		writeln();
+	}
+
+	@PExport string mutateString(string s){
+		return format!"mutated %s"(s);
 	}
 }
