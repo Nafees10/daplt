@@ -55,26 +55,32 @@ private template IsPltWrapper(T){
 }
 
 /// Read a value by type from a PObj
+/// Throws: DapltException if type not matching
 /// Returns: the value
 T get(T)(PObj obj){
 	static if (is (T == int)){
-		assert (obj.type == PType.Int);
+		if (obj.type != PType.Int)
+			throw new DapltException(PError.Type);
 		return cast(int)obj.i;
 	}
 	static if (is (T == long)){
-		assert (obj.type == PType.Int64);
+		if (obj.type != PType.Int64)
+			throw new DapltException(PError.Type);
 		return cast(long)obj.l;
 	}
 	static if (is (T == bool)){
-		assert (obj.type == PType.Bool);
+		if (obj.type != PType.Bool)
+			throw new DapltException(PError.Type);
 		return cast(bool)obj.i;
 	}
 	static if (is (T == string)){
-		assert (obj.type == PType.Str);
+		if (obj.type != PType.Str)
+			throw new DapltException(PError.Type);
 		return cast(string)fromStringz(cast(char*)plt.strAsCstr(obj));
 	}
 	static if (is (T == double)){
-		assert (obj.type == PType.Float);
+		if (obj.type != PType.Float)
+			throw new DapltException(PError.Type);
 		return cast(double)obj.f;
 	}
 	static if (is (T == void*)){
@@ -142,7 +148,8 @@ struct PDict{
 	PObj obj;
 
 	this (PObj obj){
-		assert (obj.type == PType.Dict);
+		if (obj.type != PType.Dict)
+			throw new DapltException(PError.Type);
 		this.obj = obj;
 	}
 
@@ -190,7 +197,8 @@ struct PBArray{
 	PObj obj;
 
 	this (PObj obj){
-		assert (obj.type == PType.ByteArr);
+		if (obj.type != PType.ByteArr)
+			throw new DapltException(PError.Type);
 		this.obj = obj;
 	}
 
@@ -233,7 +241,8 @@ struct PList{
 	PObj obj;
 
 	this (PObj obj){
-		assert (obj.type == PType.List);
+		if (obj.type != PType.List)
+			throw new DapltException(PError.Type);
 		this.obj = obj;
 	}
 
@@ -276,7 +285,8 @@ struct PModule{
 	PObj obj;
 
 	this (PObj obj){
-		assert (obj.type == PType.Module);
+		if (obj.type != PType.Module)
+			throw new DapltException(PError.Type);
 		this.obj = obj;
 	}
 
@@ -297,7 +307,8 @@ struct PClass{
 	PObj obj;
 
 	this (PObj obj){
-		assert (obj.type == PType.Class);
+		if (obj.type != PType.Class)
+			throw new DapltException(PError.Type);
 		this.obj = obj;
 	}
 
@@ -322,7 +333,8 @@ struct PClassObj{
 	PObj obj;
 
 	this (PObj obj){
-		assert (obj.type == PType.Obj);
+		if (obj.type != PType.Obj)
+			throw new DapltException(PError.Type);
 		this.obj = obj;
 	}
 
@@ -364,7 +376,8 @@ struct PCallable{
 	PObj obj;
 
 	this (PObj obj){
-		assert (obj.type == PType.NativeFunc || obj.type == PType.Func);
+		if (obj.type != PType.NativeFunc && obj.type != PType.Func)
+			throw new DapltException(PError.Type);
 		this.obj = obj;
 	}
 	this (string name, PFunc func){
@@ -428,7 +441,6 @@ private template Exported(alias T){
 /// container (module, struct, interface etc)
 PModule moduleCreate(alias T)(string name){
 	PModule mod = PModule.alloc(name);
-	writeln("creating module");
 	static foreach (fName; __traits(allMembers, T)){
 		static if (hasUDA!(__traits(getMember, T, fName), PExport)){
 			alias fn = __traits(getMember, T, fName);
@@ -448,9 +460,9 @@ PModule moduleCreate(alias T)(string name){
 /// Returns: PObj containing return value, or PNull, or error object in case of
 /// Exception
 extern (C) PObj asPltFunc(alias F)(PObj* ptr, int length) if (isCallable!F){
-	if (length < ParameterMinCount!F && length > Parameters!F.length)
+	if (length < ParameterMinCount!F || length > Parameters!F.length)
 		return PError(PError.Argument,
-				format!"Expected between %d and %d arguemtns, got %d"(
+				format!"Expected between %d and %d arguments, got %d"(
 					ParameterMinCount!F, Parameters!F.length, length));
 	Parameters!F params;
 	params[ParameterMinCount!F .. $] = ParameterDefaults!F[$ - ParameterMinCount!F .. $];
@@ -472,7 +484,11 @@ extern (C) PObj asPltFunc(alias F)(PObj* ptr, int length) if (isCallable!F){
 	}
 	PObj ret = PNull;
 	try{
-		ret = F(params).to!PObj;
+		static if (!is (ReturnType!F == void)){
+			ret = F(params).to!PObj;
+		}else{
+			F(params);
+		}
 	} catch (DapltException e){
 		ret = PError(e.errorObj, e.msg);
 	} catch (Exception e){
