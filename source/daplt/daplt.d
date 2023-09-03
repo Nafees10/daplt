@@ -442,11 +442,11 @@ private template Exported(alias T){
 PModule moduleCreate(alias T)(string name){
 	PModule mod = PModule.alloc(name);
 	static foreach (fName; __traits(allMembers, T)){
-		static if (hasUDA!(__traits(getMember, T, fName), PExport)){
+		static if (hasUDA!(__traits(getMember, T, fName), PExport)){{
 			alias fn = __traits(getMember, T, fName);
 			mod.add(fName, PCallable(fName,
 						(&asPltFunc!(__traits(getMember, T, fName)))).obj);
-		}
+		}}
 	}
 	return mod;
 }
@@ -460,12 +460,19 @@ PModule moduleCreate(alias T)(string name){
 /// Returns: PObj containing return value, or PNull, or error object in case of
 /// Exception
 extern (C) PObj asPltFunc(alias F)(PObj* ptr, int length) if (isCallable!F){
-	if (length < ParameterMinCount!F || length > Parameters!F.length)
-		return PError(PError.Argument,
-				format!"Expected between %d and %d arguments, got %d"(
-					ParameterMinCount!F, Parameters!F.length, length));
+	if (length < ParameterMinCount!F || length > Parameters!F.length){
+		static if (ParameterMinCount!F != Parameters!F.length)
+			return PError(PError.Argument,
+					format!"Expected between %d and %d arguments, got %d"(
+						ParameterMinCount!F, Parameters!F.length, length));
+		else
+			return PError(PError.Argument,
+					format!"Expected %d arguments, got %d"(ParameterMinCount!F, length));
+	}
 	Parameters!F params;
-	params[ParameterMinCount!F .. $] = ParameterDefaults!F[$ - ParameterMinCount!F .. $];
+	static if (ParameterMinCount!F != params.length)
+		params[ParameterMinCount!F .. $] =
+			ParameterDefaults!F[ParameterMinCount!F .. $];
 	try{
 		static foreach (i; 0 .. params.length){
 			try{
