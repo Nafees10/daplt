@@ -1,6 +1,6 @@
 # daplt
 
-D Language wrapper to Plutonium for creating modules.
+D Language wrapper to Plutonium Programming Language for creating modules.
 
 ## Getting Started
 
